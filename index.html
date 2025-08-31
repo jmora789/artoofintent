@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Art of Intent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Barlow', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 600px;
+            width: 100%;
+        }
+        canvas {
+            border: 2px solid #e5e7eb;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            cursor: crosshair;
+            touch-action: none;
+            width: 100%;
+            height: auto;
+        }
+        #alert-modal {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .header-font {
+            font-family: 'Oswald', sans-serif;
+            font-size: 16pt;
+            text-transform: uppercase;
+        }
+        .body-font {
+            font-family: 'Barlow', sans-serif;
+            font-weight: 300;
+            font-size: 14pt;
+        }
+        .button-primary {
+            background-color: #E91D63;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-family: 'Barlow', sans-serif;
+            font-weight: 400; /* Barlow Normal */
+            text-transform: uppercase;
+        }
+        .button-primary:hover {
+            background-color: #d11a5a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container flex flex-col gap-6 text-center">
+        <h1 class="header-font font-bold">The Art of Intent</h1>
+        <p class="body-font text-gray-600 mb-4">A simple doodle is just lines on a page. But what happens when you give it meaning?</p>
+
+        <!-- Step 1: Drawing -->
+        <div id="drawing-step">
+            <h2 class="header-font font-bold mb-4">Step 1: Create your doodle.</h2>
+            <p class="body-font mb-4">Use your mouse or finger to draw a few lines on the canvas.</p>
+            <canvas id="doodleCanvas" width="500" height="300"></canvas>
+            <button id="nextBtn" class="button-primary mt-4">I'm done doodling!</button>
+        </div>
+
+        <!-- Step 2: Interpretation -->
+        <div id="interpretation-step" class="hidden">
+            <h2 class="header-font font-bold mb-4">Step 2: Give it meaning.</h2>
+            <p class="body-font mb-4">Think about what your doodle could represent. What is its title? What is it trying to say?</p>
+            <div class="flex flex-col gap-4">
+                <input type="text" id="artTitle" placeholder="Title your masterpiece" class="p-2 border border-gray-300 rounded-md">
+                <textarea id="artDescription" rows="4" placeholder="Describe the meaning behind your art..." class="p-2 border border-gray-300 rounded-md"></textarea>
+            </div>
+            <button id="showArtBtn" class="button-primary mt-4">Reveal my artwork</button>
+        </div>
+
+        <!-- Step 3: Result -->
+        <div id="result-step" class="hidden flex flex-col items-center">
+            <h2 class="header-font font-bold mb-4">Your Artwork:</h2>
+            <canvas id="resultCanvas" width="500" height="300" class="mb-4"></canvas>
+            <h3 id="finalTitle" class="header-font text-2xl font-bold text-center"></h3>
+            <p id="finalDescription" class="body-font text-lg text-gray-700 mt-2 text-center"></p>
+        </div>
+    </div>
+
+    <!-- Custom alert modal (for messages) -->
+    <div id="alert-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center flex flex-col gap-4">
+            <p id="alert-message" class="text-lg font-bold"></p>
+            <button onclick="document.getElementById('alert-modal').classList.add('hidden')" class="button-primary">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // Custom alert function to replace window.alert()
+        window.alert = function(message) {
+            const modal = document.getElementById('alert-modal');
+            const msgEl = document.getElementById('alert-message');
+            msgEl.textContent = message;
+            modal.classList.remove('hidden');
+        };
+
+        const canvas = document.getElementById('doodleCanvas');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const ctx = canvas.getContext('2d');
+        const resultCtx = resultCanvas.getContext('2d');
+
+        const drawingStep = document.getElementById('drawing-step');
+        const interpretationStep = document.getElementById('interpretation-step');
+        const resultStep = document.getElementById('result-step');
+
+        const nextBtn = document.getElementById('nextBtn');
+        const showArtBtn = document.getElementById('showArtBtn');
+        const artTitleInput = document.getElementById('artTitle');
+        const artDescriptionTextarea = document.getElementById('artDescription');
+        const finalTitleEl = document.getElementById('finalTitle');
+        const finalDescriptionEl = document.getElementById('finalDescription');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Function to resize canvas to fit parent container
+        function resizeCanvas() {
+            const containerWidth = canvas.parentElement.offsetWidth;
+            const containerHeight = 300; // Fixed height for a good aspect ratio
+            const pixelRatio = window.devicePixelRatio || 1;
+            
+            canvas.width = containerWidth * pixelRatio;
+            canvas.height = containerHeight * pixelRatio;
+            canvas.style.width = containerWidth + 'px';
+            canvas.style.height = containerHeight + 'px';
+
+            resultCanvas.width = containerWidth * pixelRatio;
+            resultCanvas.height = containerHeight * pixelRatio;
+            resultCanvas.style.width = containerWidth + 'px';
+            resultCanvas.style.height = containerHeight + 'px';
+            
+            ctx.scale(pixelRatio, pixelRatio);
+            resultCtx.scale(pixelRatio, pixelRatio);
+
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#000000';
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(clientX - rect.left, clientY - rect.top);
+            ctx.stroke();
+            [lastX, lastY] = [clientX - rect.left, clientY - rect.top];
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            [lastX, lastY] = [clientX - rect.left, clientY - rect.top];
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            startDrawing(e);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            draw(e);
+        });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Event listener for the "Next" button
+        nextBtn.addEventListener('click', () => {
+            const imageData = canvas.toDataURL(); // Save the drawing
+            const img = new Image();
+            img.onload = () => {
+                // Draw the saved image onto the result canvas
+                resultCtx.drawImage(img, 0, 0, resultCanvas.width, resultCanvas.height);
+            };
+            img.src = imageData;
+
+            drawingStep.classList.add('hidden');
+            interpretationStep.classList.remove('hidden');
+        });
+
+        // Event listener for the "Show Art" button
+        showArtBtn.addEventListener('click', () => {
+            if (artTitleInput.value.trim() === '' || artDescriptionTextarea.value.trim() === '') {
+                window.alert('Please provide both a title and a description to give your art meaning.');
+                return;
+            }
+            
+            finalTitleEl.textContent = artTitleInput.value;
+            finalDescriptionEl.textContent = artDescriptionTextarea.value;
+            
+            interpretationStep.classList.add('hidden');
+            resultStep.classList.remove('hidden');
+        });
+
+        // Initialize canvas
+        window.onload = function() {
+            resizeCanvas();
+        }
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>
