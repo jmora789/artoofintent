@@ -6,7 +6,7 @@
     <title>The Art of Intent</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -38,12 +38,20 @@
         #alert-modal {
             background-color: rgba(0, 0, 0, 0.5);
         }
-        .header-font {
-            font-family: Arial, sans-serif;
-            font-size: 32px;
-            font-weight: bold;
-            color: #e91d63; /* Corrected to the hex red color */
-            text-transform: none;
+        /* Custom styles for headers */
+        .main-header {
+            font-family: 'Oswald', sans-serif; /* Changed to Oswald */
+            font-size: 32px; /* Set to 32px */
+            font-weight: 700;
+            color: #e91d63;
+        }
+        .subheader {
+            font-family: 'Oswald', sans-serif; /* Changed to Oswald */
+            font-size: 14pt; /* Set to 14pt */
+            font-weight: 400; /* Regular weight */
+            color: #333; /* Black color */
+            text-transform: uppercase; /* All caps */
+            margin-bottom: 0.5rem; /* Reduced spacing */
         }
         .body-font {
             font-family: 'Barlow', sans-serif;
@@ -58,7 +66,7 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
             font-family: 'Barlow', sans-serif;
-            font-weight: 400; /* Barlow Normal */
+            font-weight: 400;
             text-transform: uppercase;
         }
         .button-primary:hover {
@@ -68,18 +76,18 @@
 </head>
 <body>
     <div class="container flex flex-col gap-6 text-center">
-        <h1 class="header-font font-bold">The Art of Intent</h1>
-        <p class="body-font text-gray-600 mb-4">A simple doodle is just lines on a page. But what happens when you give it meaning?</p>
+        <h1 class="main-header">The Art of Intent</h1>
+        <p class="body-font text-gray-600">A simple doodle is just lines on a page. But what happens when you give it meaning?</p>
 
         <div id="drawing-step">
-            <h2 class="header-font font-bold mb-4">Step 1: Create your doodle.</h2>
+            <h2 class="subheader">Step 1: Create your doodle.</h2>
             <p class="body-font mb-4">Use your mouse or finger to draw a few lines on the canvas.</p>
             <canvas id="doodleCanvas" width="500" height="300"></canvas>
             <button id="nextBtn" class="button-primary mt-4">I'm done doodling!</button>
         </div>
 
         <div id="interpretation-step" class="hidden">
-            <h2 class="header-font font-bold mb-4">Step 2: Give it meaning.</h2>
+            <h2 class="subheader">Step 2: Give it meaning.</h2>
             <p class="body-font mb-4">Think about what your doodle could represent. What is its title? What is it trying to say?</p>
             <div class="flex flex-col gap-4">
                 <input type="text" id="artTitle" placeholder="Title your masterpiece" class="p-2 border border-gray-300 rounded-md">
@@ -89,7 +97,7 @@
         </div>
 
         <div id="result-step" class="hidden flex flex-col items-center">
-            <h2 class="header-font font-bold mb-4">Your Artwork:</h2>
+            <h2 class="subheader">Your Artwork:</h2>
             <canvas id="resultCanvas" width="500" height="300" class="mb-4"></canvas>
             <h3 id="finalTitle" class="header-font text-2xl font-bold text-center"></h3>
             <p id="finalDescription" class="body-font text-lg text-gray-700 mt-2 text-center"></p>
@@ -196,21 +204,20 @@
 
         // Touch events
         canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             startDrawing(e);
         });
         canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // Prevent scrolling
+            e.preventDefault();
             draw(e);
         });
         canvas.addEventListener('touchend', stopDrawing);
 
         // Event listener for the "Next" button
         nextBtn.addEventListener('click', () => {
-            const imageData = canvas.toDataURL(); // Save the drawing
+            const imageData = canvas.toDataURL();
             const img = new Image();
             img.onload = () => {
-                // Draw the saved image onto the result canvas
                 resultCtx.drawImage(img, 0, 0, resultCanvas.width, resultCanvas.height);
             };
             img.src = imageData;
